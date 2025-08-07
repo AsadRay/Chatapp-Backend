@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Environment
+.env
+.venv/
+env/
+venv/
+
+# IDEs/editors
+.vscode/
+.idea/
+*.swp
+
+# Flask DB migrations
+migrations/
+
+# Byte-compiled / optimized / DLL files
+*.so
+
+# Logs
+*.log
+
+# OS generated
+.DS_Store
+Thumbs.db
