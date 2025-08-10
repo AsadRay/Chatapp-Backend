@@ -3,8 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import User, FriendRequest
 from datetime import datetime
-from sqlalchemy import or_
-
+from sqlalchemy import or_ , and_
+from app.models import User, FriendRequest, Friendship
 friend_bp = Blueprint('friend', __name__)
 
 # Send Friend Request
@@ -18,12 +18,39 @@ def send_friend_request():
     if not receiver_id or receiver_id == sender_id:
         return jsonify({'error': 'Invalid request'}), 400
 
-    # Check if already requested or friends
-    existing = FriendRequest.query.filter_by(sender_id=sender_id, receiver_id=receiver_id).first()
-    if existing:
-        return jsonify({'error': 'Request already sent or exists'}), 400
+    # ✅ Check if already friends
+    existing_friendship = Friendship.query.filter(
+        or_(
+            and_(Friendship.user_id == sender_id, Friendship.friend_id == receiver_id),
+            and_(Friendship.user_id == receiver_id, Friendship.friend_id == sender_id)
+        )
+    ).first()
 
-    friend_request = FriendRequest(sender_id=sender_id, receiver_id=receiver_id)
+    if existing_friendship:
+        return jsonify({'error': 'You are already friends'}), 400
+
+    # ✅ Check if friend request already exists (from sender to receiver)
+    existing_request = FriendRequest.query.filter_by(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        status='pending'  # Assuming you have a 'status' field
+    ).first()
+
+    if existing_request:
+        return jsonify({'error': 'Friend request already sent'}), 400
+
+    # ✅ Optional: Also check if receiver already sent a request to sender (you might want to auto-accept)
+    reverse_request = FriendRequest.query.filter_by(
+        sender_id=receiver_id,
+        receiver_id=sender_id,
+        status='pending'
+    ).first()
+
+    if reverse_request:
+        return jsonify({'error': 'They have already sent you a request'}), 400
+
+    # ✅ Create and send friend request
+    friend_request = FriendRequest(sender_id=sender_id, receiver_id=receiver_id, status='pending')
     db.session.add(friend_request)
     db.session.commit()
 
@@ -64,6 +91,8 @@ def respond_to_request():
     if action == 'accept':
         req.status = 'accepted'
         req.accepted_at = datetime.utcnow()
+        friendship = Friendship(user_id=req.sender_id, friend_id=req.receiver_id)
+        db.session.add(friendship)
     elif action == 'reject':
         req.status = 'rejected'
     else:
