@@ -24,7 +24,8 @@ def create_app():
     jwt = JWTManager()
     jwt.init_app(app)
 
-    app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     from app.routes.auth_routes import auth_bp
     app.register_blueprint(auth_bp)

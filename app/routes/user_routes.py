@@ -49,7 +49,6 @@ def get_all_users():
             'username': user.username,
             'email': user.email,
             'profile_picture': user.profile_picture,
-            'profile_picture': user.profile_picture,
             'friendship_status': get_status(user.id)
         })
 
@@ -82,6 +81,7 @@ def upload_profile_picture():
         db.session.commit()
 
         return jsonify({'message': 'Profile picture uploaded successfully', 'profile_picture': user.profile_picture}), 200
+    
 
     return jsonify({'error': 'Invalid file type'}), 400
 
@@ -111,6 +111,4 @@ def update_my_profile():
             'profile_picture': user.profile_picture
         }
     }), 200
-
-
 
